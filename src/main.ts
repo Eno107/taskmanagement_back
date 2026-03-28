@@ -6,8 +6,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const config = new DocumentBuilder()
-    .setTitle('Task Management API')
-    .setDescription('Real-time task management application API')
+    .setTitle('TaskFlow API')
+    .setDescription('Real-time task management application API - TaskFlow')
     .setVersion('1.0')
     .build();
 
