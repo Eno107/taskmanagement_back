@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  InternalServerErrorException,
+  Logger,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -6,21 +13,28 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { AuthGuard } from '../auth/auth.guard';
+import { ClerkTokenGuard } from '../auth/clerk-token.guard';
 import { CreateUserDto } from './dtos/create-user.dto';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(AuthGuard)
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
+  @UseGuards(ClerkTokenGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createUser(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.createUser(createUserDto);
+    try {
+      return await this.usersService.createUser(createUserDto);
+    } catch (error) {
+      this.logger.error(`Error creating user: ${error}`);
+      throw new InternalServerErrorException('Failed to create user');
+    }
   }
 }
