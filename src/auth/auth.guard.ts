@@ -5,15 +5,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { verifyToken } from '@clerk/backend';
-import { UsersService } from '../users/users.service';
+import { JwtPayload } from '@clerk/express/types';
 import { User } from '@prisma/client';
+import { Request } from 'express';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(private usersService: UsersService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request: Request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -24,7 +26,7 @@ export class AuthGuard implements CanActivate {
 
     const token = authHeader.split(' ')[1];
 
-    let verifiedToken;
+    let verifiedToken: JwtPayload;
 
     try {
       verifiedToken = await verifyToken(token, {
@@ -38,9 +40,6 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Invalid token');
     }
 
-    // Get the user ID from the verified token
-    request.userId = verifiedToken.sub;
-
     // Verify User exists in the database
     const user: User | null = await this.usersService.getUserByClerkId(
       verifiedToken.sub,
@@ -50,7 +49,7 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('User not found in database');
     }
 
-    request.user = user as User;
+    request['user'] = user;
     return true;
   }
 }
