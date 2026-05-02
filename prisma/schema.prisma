@@ -86,18 +86,19 @@ model Column {
 
 model Task {
   id          String       @id @default(uuid())
-  columnId    String
+  columnId    String?
   title       String
   description String?
   priority    TaskPriority @default(MEDIUM)
-  position    Int
+  position    Int          @default(0)
   assigneeId  String?
   reporterId  String
   dueDate     DateTime?
+  estimatedMinutes Int?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  column   Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  column   Column?   @relation(fields: [columnId], references: [id], onDelete: SetNull)
   assignee User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
   reporter User      @relation("TaskReporter", fields: [reporterId], references: [id])
   comments Comment[]
